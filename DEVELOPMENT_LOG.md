@@ -125,9 +125,6 @@ graph TD
 
 ---
 
-## 4. Post-Silicon Physical Instrumentation Protocol
-
-Upon delivery of the physical instrumentation hardware, the repository will split into a hardware-targeted branch to validate the software-level predictive scheduling metrics against physical silicon phenomena.
 
 ## 4. Post-Silicon Physical Instrumentation Protocol
 
