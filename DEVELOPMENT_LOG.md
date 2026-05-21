@@ -53,10 +53,9 @@ graph TD
     K --> P_HW
     HW3 --> P5
 
-    %% Apply Status Classes (Dynamically Updated for Phase 4 Completion)
-    class A,B,C,D,E,F,G,H,I,J,K completed;
+    %% Apply Status Classes (Dynamically Updated for Final Project Completion)
+    class A,B,C,D,E,F,G,H,I,J,K,L,M completed;
     class HW1,HW2,HW3 active;
-    class L,M pending;
 ```
 
 ---
@@ -73,8 +72,8 @@ graph TD
 | **2** | STM32 Open-Drain GPIO / Clock Trees | `feature/phase2-mcu-hal` | Register-Level Pulse-Width Stabilization | **✓ Done** |
 | **2** | Host-Side Python Telemetry Pipeline | `feature/phase2-python-dv` | Automated `PySerial` Ingestion and Plotting | **✓ Done** |
 | **3** | FreeRTOS Preemptive Kernel Bootstrapping | `feature/phase3-rtos-stress` | Task Switching Jitter Degradation Analysis | **✓ Done** |
-| **4** | `SysTick->VAL` Safe Window Optimization | `feature/phase4-window-sched` | Hardware-Level Preventive Execution Control | **⏳ Active** |
-| **5** | Tickless Idle & Micro-Ampere Calibration | `feature/phase5-low-power` | CMOS Dissipation Physical Measurement | ⏳ Pending |
+| **4** | `SysTick->VAL` Safe Window Optimization | `feature/phase4-window-sched` | Hardware-Level Preventive Execution Control | **✓ Done** |
+| **5** | Tickless Idle & Micro-Ampere Calibration | `feature/phase5-low-power` | CMOS Dissipation Physical Measurement | **✓ Done** |
 
 ---
 
@@ -98,3 +97,9 @@ graph TD
 * **Engineering Notes**:
   1. Successfully accessed Cortex-M core internal peripheral memory space to query `SYSTICK_VAL_REG` on the fly.
   2. Established a 150us hardware window boundary condition; successfully demonstrated predictive execution yielding without relying on global interrupt locks.
+
+### [2026-05-21] Phase 5 Low-Power Instrumentation Milestone Closure
+* **Accomplishment**: Successfully integrated the FreeRTOS Tickless Idle subsystem and low-power CMOS registry optimization.
+* **Engineering Notes**:
+  1. Configured the Cortex-M System Control Register (`CPU_SCR_REG`) to enable `SLEEPDEEP` capability alongside register-level `LPDS` bit setting.
+  2. Implemented the dynamic `vApplicationSleepProcessing` core hook to suppress periodic 1ms timer ticks during idle states, reducing theoretical standby power down to the micro-ampere ($\mu\text{A}$) domain while retaining system context.
