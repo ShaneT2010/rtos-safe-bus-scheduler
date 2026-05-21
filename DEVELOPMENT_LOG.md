@@ -36,20 +36,27 @@ graph TD
         J[SysTick->VAL Window Calculation] --> K[Zero-Latency Collision Avoidance]
     end
 
+    %% Post-Silicon Physical Verification Blocks (Parallel Track)
+    subgraph P_HW [Post-Silicon Physical Validation]
+        HW1[STM32 Hardware Flashing] --> HW2[DHT22 Physical Sensor Hookup]
+        HW2 --> HW3[Logic Analyzer Pulse Capture]
+    end
+
     subgraph P5 [Phase 5: Power Instrumentation]
         L[Tickless Idle Low-Power Configuration] --> M[Micro-Ampere Static/Dynamic Metering]
     end
 
-    %% System Dependencies Linkage (Optimized to prevent text overlap)
+    %% System Dependencies Linkage (Optimized Dual-Track Routing)
     E --> P2
     G --> P3
     I --> P4
-    K --> P5
+    K --> P_HW
+    HW3 --> P5
 
-    %% Apply Status Classes (Dynamically Updated)
-    class A,B,C,D,E completed;
-    class F,G active;
-    class H,I,J,K,L,M pending;
+    %% Apply Status Classes (Dynamically Updated for Phase 4 Completion)
+    class A,B,C,D,E,F,G,H,I,J,K completed;
+    class HW1,HW2,HW3 active;
+    class L,M pending;
 ```
 
 ---
@@ -79,3 +86,15 @@ graph TD
   1. Utilized 50 MHz timescale granularity to match internal MCU tracking.
   2. Implemented an anti-race condition via `clocking cb` with explicit #1ns input/output skew.
   3. Formulated 3 distinct SVA concurrent properties to log runtime collisions without modifying testbench logic variables.
+
+### [2026-05-21] Phase 2 & 3 Firmware & Multi-tasking Stress Baseline
+* **Accomplishment**: Implemented direct register-mapped GPIO abstraction and behavioral multi-tasking preemption stress model.
+* **Engineering Notes**:
+  1. Bypassed blocking HAL layer for single-cycle open-drain bit manipulation.
+  2. Synthesized an internal context-switch injector carded at 155us to force packet-drop anomalies and record baseline checksum corruption on the host side.
+
+### [2026-05-21] Phase 4 Algorithmic Mitigation Milestone Closure
+* **Accomplishment**: Deployed the zero-latency active window-scheduling defense mechanism.
+* **Engineering Notes**:
+  1. Successfully accessed Cortex-M core internal peripheral memory space to query `SYSTICK_VAL_REG` on the fly.
+  2. Established a 150us hardware window boundary condition; successfully demonstrated predictive execution yielding without relying on global interrupt locks.
