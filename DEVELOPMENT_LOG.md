@@ -90,9 +90,9 @@ graph TD
 | **HW P2** | DHT22 Physical Signal Line Coupling | `trackB-hw-wire` | Pull-up Resistor VCC/GND Oscilloscope Check | **⏳ Active** |
 | **HW P3** | Logic Analyzer Waveform Profiling | `trackB-hw-logic` | Pulse Width Measurement vs SVA Protocol Rules | **⏳ Active** |
 | **HW P4** | Telemetry Python Bridge Integration | `trackB-hw-serial` | Real-time Packet Drop Rate (PDR) Logging | **⏳ Active** |
-| **Phase 6.1** | Multi-Sensor Single-Wire Bus Chain | `extension-multi-bus` | Dynamic Addressing & Anti-Collision Bus Arbitrate | ⏳ Pending |
-| **Phase 6.2** | Machine Learning Adaptive Windowing | `extension-ml-window` | Jitter Variance Prediction via Linear Regressor | ⏳ Pending |
-| **Phase 6.3** | Fault-Tolerant Bus Crash Recovery | `extension-recovery` | Automated Bit-Bang Reset on Bus Deadlock | ⏳ Pending |
+| **6.1** | Multi-Sensor Single-Wire Bus Chain | `extension-multi-bus` | Dynamic Addressing & Anti-Collision Bus Arbitrate | ⏳ Pending |
+| **6.2** | Machine Learning Adaptive Windowing | `extension-ml-window` | Jitter Variance Prediction via Linear Regressor | ⏳ Pending |
+| **6.3** | Fault-Tolerant Bus Crash Recovery | `extension-recovery` | Automated Bit-Bang Reset on Bus Deadlock | ⏳ Pending |
 
 ---
 
