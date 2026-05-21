@@ -39,10 +39,10 @@ graph TD
     end
 
     %% Track A Internal Routing Flow
-    E --> F
-    G --> H
-    I --> J
-    K --> L
+    E --> P2
+    G --> P3
+    I --> P4
+    K --> P5
 
     %% ==================== TRACK B: POST-SILICON INSTRUMENTATION ====================
     subgraph P_HW [Track B: Post-Silicon Physical Validation]
@@ -59,8 +59,8 @@ graph TD
     end
 
     %% Track Cross-Linkage Convergence
-    M --> E1
-    HW4 --> E1
+    M --> TrackC
+    HW4 --> TrackC
     E1 --> E2
     E2 --> E3
 
