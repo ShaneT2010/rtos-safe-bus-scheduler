@@ -63,9 +63,9 @@ graph TD
 | **1** | Virtual Interface Setup (`clocking_block`) | `feature/phase1-sva-interface` | Race-Condition Prevention Tracking | **✓ Done** |
 | **1** | SVA Protocol Timing Assertion Engine | `feature/phase1-sva-interface` | Microsecond Jitter / Collision Interruption Check | **✓ Done** |
 | **1** | Top-Level Testbench Infrastructure | `feature/phase1-tb-top` | 5-Frame Interrupt Injected Simulation Loop | **✓ Done** |
-| **2** | STM32 Open-Drain GPIO / Clock Trees | `feature/phase2-mcu-hal` | Register-Level Pulse-Width Stabilization | **⏳ Active** |
-| **2** | Host-Side Python Telemetry Pipeline | `feature/phase2-python-dv` | Automated `PySerial` Ingestion and Plotting | **⏳ Active** |
-| **3** | FreeRTOS Preemptive Kernel Bootstrapping | `feature/phase3-rtos-stress` | Task Switching Jitter Degradation Analysis | ⏳ Pending |
+| **2** | STM32 Open-Drain GPIO / Clock Trees | `feature/phase2-mcu-hal` | Register-Level Pulse-Width Stabilization | **✓ Done** |
+| **2** | Host-Side Python Telemetry Pipeline | `feature/phase2-python-dv` | Automated `PySerial` Ingestion and Plotting | **✓ Done** |
+| **3** | FreeRTOS Preemptive Kernel Bootstrapping | `feature/phase3-rtos-stress` | Task Switching Jitter Degradation Analysis | **⏳ Active** |
 | **4** | `SysTick->VAL` Safe Window Optimization | `feature/phase4-window-sched` | Hardware-Level Preventive Execution Control | ⏳ Pending |
 | **5** | Tickless Idle & Micro-Ampere Calibration | `feature/phase5-low-power` | CMOS Dissipation Physical Measurement | ⏳ Pending |
 
