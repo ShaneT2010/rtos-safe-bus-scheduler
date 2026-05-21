@@ -47,23 +47,23 @@ The physical implementation leverages an ARM Cortex-M4 microcontroller (STM32F41
 ---
 
 ### Track B: Post-Silicon Hardware Physical Validation (HW Phase 1-4)
-*   **HW Phase 1: Physical Firmware Flashing & On-Chip Debugging (`trackB-hw-flash`)**
+*   **HW Phase 1: Physical Firmware Flashing & On-Chip Debugging**
     *   *Execution*: Deploy compiled binaries via ST-Link V2 hardware programmers. Interrogate Cortex-M4 memory-mapped structures using GDB register-level inspection to guarantee that the `SysTick` down-counter runs at full CPU core frequency ($100\ \text{MHz}$).
-*   **HW Phase 2: Signal Line Impedance & Coupling Characterization (`trackB-hw-wire`)**
+*   **HW Phase 2: Signal Line Impedance & Coupling Characterization**
     *   *Execution*: Interface the physical sensor array onto the MCU GPIO pins. Utilize a mixed-signal oscilloscope to analyze transmission line characteristics, tuning the pull-up resistor constraints ($4.7\ \text{k}\Omega$) to eliminate rise-time distortion ($T_r$) induced by parasitic bus capacitance ($C_{\text{bus}}$).
-*   **HW Phase 3: Logic Analyzer Microsecond Protocol Profiling (`trackB-hw-logic`)**
+*   **HW Phase 3: Logic Analyzer Microsecond Protocol Profiling**
     *   *Execution*: Hook up an external 16-channel logic analyzer to the active single-wire bus. Capture raw pulse-width profiles at $100\ \text{MS/s}$ sampling rates to cross-examine hardware bit timings against the predefined Pre-Silicon SVA protocol parameters.
-*   **HW Phase 4: Telemetry Ground Station Hardware Integration (`trackB-hw-serial`)**
+*   **HW Phase 4: Telemetry Ground Station Hardware Integration**
     *   *Execution*: Bridge the STM32 hardware UART peripheral with the host PC via a USB-to-TTL serial converter. Ingest asynchronous frames into the real-time telemetry bridge, tracking Packet Drop Rates (PDR) under active interrupt load.
 
 ---
 
 ### Phase 6: Multi-Node Topology Expansion, Predictive Windowing & Self-Healing
-*   **Phase 6.1: Time-Division Multi-Sensor Chain & Co-Design Isolation (Current Milestone)**
+*   **Phase 6.1: Time-Division Multi-Sensor Chain & Co-Design Isolation**
     *   *Execution*: Implemented a software-defined TDMA sequential polling engine inside `firmware/sensor_array_scheduler.c` to handle multiple DHT22 channels on a shared system architecture. Refactored the SystemVerilog testbench top with `tri1` nets to verify multi-node electrical loading configurations, and updated the host Python telemetry layer to track PDR across distinct node profiles.
-*   **Phase 6.2: Machine Learning Adaptive Windowing (`extension-ml-window`)**
+*   **Phase 6.2: Machine Learning Adaptive Windowing**
     *   *Execution*: Incorporate an on-chip, lightweight linear regression predictor that dynamically analyzes the moving variance of historical RTOS task execution times, scaling the execution window threshold beyond the static $150\ \mu\text{s}$ baseline based on dynamic system loading.
-*   **Phase 6.3: Fault-Tolerant Bus Crash Recovery (`extension-recovery`)**
+*   **Phase 6.3: Fault-Tolerant Bus Crash Recovery**
     *   *Execution*: Implement an automated watchdog and reset routine inside the core hardware state machine. If an unresolvable line deadlock or an extended dominant-low state ($>960\ \mu\text{s}$) is captured by SVA or the firmware timer, the MCU triggers an immediate GPIO bit-bang pull-high reset sequence to clear the bus deadlock without power-cycling the system.
 
 ---
