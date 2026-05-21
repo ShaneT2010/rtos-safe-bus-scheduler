@@ -1,55 +1,25 @@
-# Prerequisites
-*.d
-
-# Object files
-*.o
-*.ko
-*.obj
+# === STM32 / GCC Target Outputs ===
 *.elf
-
-# Linker output
-*.ilk
-*.map
-*.exp
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
+*.bin
 *.hex
-
-# Debug files
-*.dSYM/
+*.map
+*.o
 *.su
-*.idb
-*.pdb
+*.d
+Debug/
+Release/
 
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
+# === Python Outputs ===
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
 
-# debug information files
-*.dwo
+# === EDA Tool Simulation Outputs (SystemVerilog) ===
+*.vcd
+*.wlf
+*.log
+work/
+transcript
+vsim.wlf
