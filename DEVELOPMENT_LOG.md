@@ -148,3 +148,28 @@ Upon delivery of the physical instrumentation hardware, the repository will spli
 *   **Instrumentation**: Digital Multimeter configured for Micro-Ampere ($\mu\text{A}$) shunt inline metering during flashed idle states.
 *   **Methodology**: Intercept the VCC power delivery plane to track real-time dynamic switching current profiles.
 *   **Expected Behavior**: Observe an instantaneous current drop from the active $15\,\text{mA}$ operating baseline down to single-digit $\mu\text{A}$ leakage ranges when the flashed kernel invokes the `vApplicationSleepProcessing` assembly block (`WFI`).
+
+
+---
+
+
+## 5. Engineering Change Order (ECO) & Phase 6 Architecture Decision
+
+### 5.1 Root Cause of Architectural Shift
+During the architectural design of Phase 6.1 (Multi-Sensor Bus Chain), a critical hardware limitation was identified within the standard DHT22 (AM2302) specifications:
+1. **Lack of Hardware Addressing**: Unlike standard Dallas/Maxim 1-Wire protocols (e.g., DS18B20), the DHT22 does not possess a unique factory-lasered 64-bit ROM ID.
+2. **Bus Contention/Collision**: Directly shorting multiple DHT22 data pins onto a single GPIO line results in catastrophic electrical contention, as all sensors respond simultaneously to a single master Start signal.
+
+### 5.2 Industry-Standard Paradigm Selection
+To achieve multi-sensor bus scalability under strict pin-count constraints (1-Wire Topology) using a single physical sensor footprint for verification, we reject the naive multi-GPIO approach (Parallel Routing) and adopt the **Software-Defined 1-Wire Emulation Platform**. This mirrors industry practices at major silicon vendors (e.g., MediaTek, NXP) where software drivers abstract missing hardware blocks via deterministic algorithmic modeling.
+
+### 5.3 Retroactive Impact on Phase 1 & Phase 4 (Track A Refactoring)
+To support this paradigm, we must retroactively modify our Pre-Silicon SV environment and firmware layer:
+*   **Phase 1 Refactoring (`bus_transaction.sv`)**: Upgrade the constrained random generator to switch from generating a single generic pulse train to generating an **8-bit Family Code + 48-bit Serial Number + 8-bit CRC** sequence, simulating a standard 1-Wire ROM structure.
+*   **Phase 4 Refactoring (`SysTick Defending`)**: The defensive window calculation must be retroactively updated. Instead of guarding a single $6.2\,\text{ms}$ point-to-point transaction, the SysTick avoidance algorithm must now dynamically calculate a **multi-node execution window** to prevent preemption during the execution of the recursive **1-Wire Binary Tree Search Algorithm**.
+
+### 5.4 Algorithmic Implementation: 1-Wire Search ROM (Binary Tree Traversal)
+The firmware will implement the classical **Maxim-Dallas 1-Wire Search ROM Algorithm**. The master resolves bit collisions by performing a deterministic binary tree traversal:
+1. The master reads two bits for every node position: the target bit and its complement.
+2. **00 Collision Detected**: If both bits are `0`, it indicates that multiple sensors are on the line with conflicting IDs at this bit position.
+3. The master dynamically branches left (`0`) or right (`1`), pushing the alternative path onto a tracking stack, systematically discovering all virtual sensor nodes on the single line.
