@@ -1,12 +1,23 @@
-// firmware/one_wire_bus.c
 #include "one_wire_bus.h"
-#include "dht22_bsp.h"   // 引入精確 bit-banging 硬體驅動
 #include "rtos_tasks.h"  // 引入 taskENTER_CRITICAL / taskEXIT_CRITICAL
 #include <string.h>
 #include <stdio.h>
 
 // ============================================================================
-// [原本保留] 初始化總線結構體與互斥鎖 (對齊新舊結構體欄位)
+// [DPI-C 橋梁宣告] 讓 C 韌體在模擬環境中能推動 SystemVerilog 的時間軸與硬體介面
+// ============================================================================
+extern void ow_bus_reset(void);
+extern uint8_t ow_read_bit(void);
+extern void ow_write_bit(uint8_t bit_val);
+extern void sv_delay_us(int us);
+
+// 覆蓋實體板子的延遲函數：確保 Pre-Silicon 模擬時間前進
+static void delay_us(int us) {
+    sv_delay_us(us);
+}
+
+// ============================================================================
+// 初始化總線結構體與互斥鎖 (對齊新舊結構體欄位)
 // ============================================================================
 void OneWire_InitBus(one_wire_bus_t *bus) {
     bus->discovered_count = 0;
@@ -20,7 +31,7 @@ void OneWire_InitBus(one_wire_bus_t *bus) {
 }
 
 // ============================================================================
-// [原本保留] Track A 虛擬節點注入機制 (完美生還)
+// Track A 虛擬節點注入機制
 // ============================================================================
 void OneWire_InjectVirtualNode(one_wire_bus_t *bus, uint8_t *mock_rom) {
     if (bus->discovered_count < MAX_BUS_NODES) {
@@ -50,7 +61,7 @@ uint8_t OneWire_SearchROM(one_wire_bus_t *bus) {
         return 0;
     }
 
-    // 2. [原本保留] 獲取 RTOS 互斥鎖，防止多任務同時調用位元碰撞
+    // 2. 獲取 RTOS 互斥鎖，防止多任務同時調用位元碰撞
     if (xSemaphoreTake(bus->bus_mutex, portMAX_DELAY) != pdTRUE) {
         return 0;
     }
@@ -61,15 +72,17 @@ uint8_t OneWire_SearchROM(one_wire_bus_t *bus) {
     taskENTER_CRITICAL();
 
     // 3. 發送 1-Wire 標準重置與存在脈衝 (Reset & Presence Pulse)
-    // 在實體線上這會讓所有元件上電復位並拉低總線
-    dht22_bus_reset(); // 假設這是底層釋放/重置總線的硬體操作
+    // 核心修正：將原先錯誤的 dht22_bus_reset 改為新一代導出的 ow_bus_reset
+    ow_bus_reset(); 
+    delay_us(100); // 重置後的穩定沉澱時間
 
     // 4. 開始 64 位元二元樹分支遍歷
     while (id_bit_number <= ROM_BIT_LENGTH) {
         
         // 核心硬體讀取：實時對 GPIO 引腳進行微秒級採樣（原位元與反轉位元）
-        id_bit     = dht22_read_bit(); 
-        cmp_id_bit = dht22_read_bit();
+        // 核心修正：對齊正確的 ow_read_bit 接口，不再調用 DHT22 舊引腳
+        id_bit     = ow_read_bit(); 
+        cmp_id_bit = ow_read_bit();
 
         if ((id_bit == 1) && (cmp_id_bit == 1)) {
             // 情況 1：無任何硬體或虛擬節點響應總線，通訊崩潰
@@ -114,9 +127,10 @@ uint8_t OneWire_SearchROM(one_wire_bus_t *bus) {
             }
 
             // 實體回寫：通知總線上的所有感測器，不符合此方向的感測器自動進入休眠（淘汰）
-            dht22_write_bit(search_direction);
+            // 核心修正：對齊正確的 ow_write_bit 接口
+            ow_write_bit(search_direction);
 
-            // [原本保留] 步進前移至 64-bit 空間中的下一個位元
+            // 步進前移至 64-bit 空間中的下一個位元
             id_bit_number++;
             rom_byte_mask <<= 1;
             if (rom_byte_mask == 0) {
@@ -145,7 +159,7 @@ uint8_t OneWire_SearchROM(one_wire_bus_t *bus) {
     }
 
     // ========================================================================
-    // 退出臨界區，還原 FreeRTOS 排班器，馬達高優先權任務重新獲得 CPU 掌控權
+    // 退出臨界區，還原 FreeRTOS 排班器
     // ========================================================================
     taskEXIT_CRITICAL();
     
@@ -153,4 +167,40 @@ uint8_t OneWire_SearchROM(one_wire_bus_t *bus) {
     xSemaphoreGive(bus->bus_mutex);
     
     return search_result;
+}
+
+// ============================================================================
+// [全新修復引入] DPI-C 測試進入點主任務：負責驅動整個韌體層的搜尋循環
+// ============================================================================
+void c_run_one_wire_test(void) {
+    one_wire_bus_t system_bus;
+    uint8_t res;
+    int loop_guard = 0;
+
+    printf("[C FIRMWARE] One-Wire SearchROM Engine Invoked via DPI-C Context.\n");
+    
+    // 初始化主韌體驅動結構體
+    OneWire_InitBus(&system_bus);
+
+    // 迴圈遍歷二元樹，直到 last_device_flag 被立起 (最多防禦 10 次避免掛機)
+    while (system_bus.last_device_flag == 0 && loop_guard < 10) {
+        loop_guard++;
+        printf("[C FIRMWARE] Initiating SearchROM Pass #%d...\n", loop_guard);
+        
+        res = OneWire_SearchROM(&system_bus);
+        
+        if (res) {
+            uint32_t idx = system_bus.discovered_count - 1;
+            printf("[C FIRMWARE] >>> Success! Found Node %d: ROM = %02X%02X%02X%02X%02X%02X%02X%02X\n",
+                   idx,
+                   system_bus.nodes[idx].rom_id[7], system_bus.nodes[idx].rom_id[6],
+                   system_bus.nodes[idx].rom_id[5], system_bus.nodes[idx].rom_id[4],
+                   system_bus.nodes[idx].rom_id[3], system_bus.nodes[idx].rom_id[2],
+                   system_bus.nodes[idx].rom_id[1], system_bus.nodes[idx].rom_id[0]);
+        } else {
+            printf("[C FIRMWARE] >>> Pass #%d did not discover any active nodes.\n", loop_guard);
+        }
+    }
+
+    printf("[C FIRMWARE] SearchROM Process Finished. Total discovered nodes: %d\n", system_bus.discovered_count);
 }
