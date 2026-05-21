@@ -58,20 +58,13 @@ The physical implementation leverages an ARM Cortex-M4 microcontroller (STM32F41
 
 ---
 
-### Phase 6: Multi-Node Expansion, Predictive Windowing & Self-Healing
-*   **Phase 6.1: Multi-Drop Binary Tree Resolution & Co-Design Isolation (Current Milestone)**
-    *   *Execution*: 
-        1. *Firmware Re-architecting*: Implemented the full Dallas/Maxim 1-Wire Binary Tree Search ROM (Command `0xF0`) algorithm inside `firmware/one_wire_search.c`, utilizing bounded critical sections to guarantee atomic read/compare slots.
-        2. *Hardware Interface Hardening*: Upgraded `sim/bus_interface.sv` from generic `logic` nets to high-impedance tri-state nets (`tri1`) with an explicit structural `generate` block to model physical Wired-AND logic for up to 4 concurrent sub-nodes.
-        3. *SVA Engine Temporal Alignment*: Re-engineered `sim/bus_assertions.sv` by migrating raw time parameters into discrete 50MHz clock cycle counts (`##[1200:1400]` for $26\ \mu\text{s}$) and added dynamic domain isolation flags (`is_1wire_mode`) to prevent multi-drop search waves from tripping legacy DHT22 assertions.
-        4. *Adaptive Telemetry Ground Station*: Re-factored `telemetry/dv_bridge.py` into a multi-protocol adaptive engine equipped with a bit-reversed Maxim CRC-8 ($X^8 + X^5 + X^4 + 1$) validator to compute microsecond-level timing jitter profiles asynchronously.
-    *   *Theoretical Foundations*: Wired-AND bus conflict mechanics, binary tree enumeration algorithms, multi-protocol verification domain isolation, and cyclic redundancy check mathematical structures.
+### Phase 6: Multi-Node Topology Expansion, Predictive Windowing & Self-Healing
+*   **Phase 6.1: Time-Division Multi-Sensor Chain & Co-Design Isolation (Current Milestone)**
+    *   *Execution*: Implemented a software-defined TDMA sequential polling engine inside `firmware/sensor_array_scheduler.c` to handle multiple DHT22 channels on a shared system architecture. Refactored the SystemVerilog testbench top with `tri1` nets to verify multi-node electrical loading configurations, and updated the host Python telemetry layer to track PDR across distinct node profiles.
 *   **Phase 6.2: Machine Learning Adaptive Windowing (`extension-ml-window`)**
-    *   *Execution*: Incorporate an on-chip, lightweight statistical or linear regression predictor that dynamically analyzes the moving variance of historical RTOS task execution times, scaling the execution window threshold beyond the static $150\ \mu\text{s}$ baseline based on dynamic system loading.
-    *   *Theoretical Foundations*: Real-time drift estimation, predictive workload analytics, and low-complexity edge computing regression.
+    *   *Execution*: Incorporate an on-chip, lightweight linear regression predictor that dynamically analyzes the moving variance of historical RTOS task execution times, scaling the execution window threshold beyond the static $150\ \mu\text{s}$ baseline based on dynamic system loading.
 *   **Phase 6.3: Fault-Tolerant Bus Crash Recovery (`extension-recovery`)**
     *   *Execution*: Implement an automated watchdog and reset routine inside the core hardware state machine. If an unresolvable line deadlock or an extended dominant-low state ($>960\ \mu\text{s}$) is captured by SVA or the firmware timer, the MCU triggers an immediate GPIO bit-bang pull-high reset sequence to clear the bus deadlock without power-cycling the system.
-    *   *Theoretical Foundations*: Hardware watchdog state clustering, state machine fault recovery, and defensive embedded firmware architectures.
 
 ---
 
