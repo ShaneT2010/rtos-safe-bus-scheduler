@@ -1,14 +1,18 @@
+// sim/bus_transaction.sv
+`timescale 1ns/1ps
 import bus_types::*;
 
+// ============================================================================
+// [Phase 1-5 核心保留] DHT22 驗證交易物件 (100% 相容原本的 Test Block A)
+// ============================================================================
 class bus_transaction;
-    // 隨機變數：模擬 FreeRTOS 核心Interrupt發生的時間點 (單位: us)
-    // FreeRTOS Tick Rate = 1000Hz (1ms), 故範圍在 0 到 1000 微秒之間
+    // 隨機變數：模擬 FreeRTOS 核心中斷發生的時間點 (單位: us)
     rand int rtos_interrupt_offset;
     
-    // 隨機變數：40-bit 的傳感器Raw Data
+    // 隨機變數：40-bit 的傳感器原始資料 (Raw Data)
     rand bit [39:0] sensor_raw_data;
 
-    // 限制區塊 (Constraint Blocks)：定義合法的隨機範圍
+    // 限制區塊：定義合法的隨機範圍
     constraint c_rtos_timing {
         rtos_interrupt_offset inside {[0:1000]}; 
     }
@@ -17,12 +21,13 @@ class bus_transaction;
         // 限制濕度與溫度在合理物理區間，避免無意義的隨機訊號
         sensor_raw_data[39:24] inside {[0:1000]}; // 濕度 0.0% - 100.0%
         sensor_raw_data[23:8]  inside {[0:500]};  // 溫度 0.0°C - 50.0°C
-        // Checksum 自動計算欄位
+        
+        // Checksum 自動計算欄位 (4個位元組相加等於低 8 位元)
         sensor_raw_data[7:0] == (sensor_raw_data[39:32] + sensor_raw_data[31:24] + 
                                  sensor_raw_data[23:16] + sensor_raw_data[15:8]);
     }
 
-    // 顯示 Transaction 詳細資訊的 Function
+    // 顯示 Transaction 詳細資訊的 Function (供 Generator / Driver 呼叫)
     function void display(string name);
         $display("[%s] RTOS Interrupt Offset: %0dus | Data: %h (RH:%0d.%0d, T:%0d.%0d)", 
                  name, rtos_interrupt_offset, sensor_raw_data,
@@ -31,8 +36,9 @@ class bus_transaction;
     endfunction
 endclass
 
+
 // ============================================================================
-// [Phase 6.1 新增] 軟體定義匯流排：1-Wire 多節點二元樹搜尋模擬物件
+// [Phase 6.1 核心修復] 1-Wire 多節點二元樹搜尋模擬物件
 // ============================================================================
 class one_wire_node;
     rand bit [7:0]  family_code;
@@ -50,8 +56,9 @@ class one_wire_node;
         bit [7:0] d;
         bit       mix;
         
-        // 封裝 8-bit family code + 48-bit serial (共 56 bits = 7 bytes)
+        // 嚴格對齊 C 端的順序：先送 family_code (Byte 0)，再送 serial_num (Byte 1~6)
         bit [55:0] full_data = {serial_num, family_code};
+        
         for (int i = 0; i < 7; i++) begin
             d = full_data[(i*8) +: 8];
             repeat(8) begin
@@ -70,13 +77,15 @@ class one_wire_node;
     endfunction
 
     // 組合出完整的 64-bit 唯一識別碼 (Rom ID)
+    // 這樣拼接確保：[7:0] 是 Family Code, [55:8] 是 Serial Number, [63:56] 是 CRC8
+    // 完美契合 C 語言韌體自低位元組往高位元組掃描的 LSB 物理特性！
     function bit [63:0] get_rom_id();
         return {crc8, serial_num, family_code};
     endfunction
     
-    // 方便 debug 
+    // 除錯列印資訊
     function void display_node(string name);
-        $display("[%s] 1-Wire Node Active -> Rom ID: 64'h%h [FC: 8'h%h, CRC: 8'h%h]", 
-                 name, get_rom_id(), family_code, crc8);
+        $display("[%s] 1-Wire Node Active -> Rom ID: 64'h%h [FC: 8'h%h, Serial: 12'h%h, CRC: 8'h%h]", 
+                 name, get_rom_id(), family_code, serial_num, crc8);
     endfunction
 endclass
